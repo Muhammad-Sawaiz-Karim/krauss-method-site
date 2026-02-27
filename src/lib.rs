@@ -156,37 +156,3 @@ fn generate_matrix_for(row_sums: &Vec<i32>, column_sums: &Vec<i32>) -> Result<Ve
 
     Ok(ferrers_matrix)
 }
-
-fn print_matrix(matrix: &Vec<Vec<i32>>)
-{
-    let row_len = matrix.len();
-    let col_len = matrix[0].len();
-
-    for row in 0..row_len
-    {
-        for column in 0..col_len
-        {
-            print!("{} ", matrix[row][column]);
-        }
-        println!("");
-    }
-}
-fn main() {
-    let row: Vec<i32> = vec![0, 3, 2, 0, 1];
-    let col: Vec<i32> = vec![1, 1, 1, 2, 1];
-
-    println!("Is a matrix possible? {}", is_matrix_possible(&row, &col));
-    let matrix = generate_matrix_for(&row, &col);
-
-    match matrix
-    {
-        Ok(matrix) =>
-        {
-            print_matrix(&matrix);
-        }
-        Err(error_message) =>
-        {
-            println!("Matrix was not generated.");
-        }
-    }
-}
