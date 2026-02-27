@@ -1,0 +1,29 @@
+/* style.css */
+body { 
+    font-family: sans-serif; 
+    padding: 20px; 
+}
+
+#matrix-container {
+    font-size: 24px; 
+    margin: 20px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-box {
+    width: 200px;
+}
+
+.generate-btn {
+    padding: 5px 15px; 
+    cursor: pointer;
+}
+
+.error-text {
+    color: red; 
+    font-weight: bold; 
+    margin-bottom: 20px;
+}

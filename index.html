@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rust WASM Matrix Generator</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Matrix Generator Test</h1>
+
+    <div class="input-group">
+        <label for="row-input">Row Sums:</label>
+        <input type="text" id="row-input" class="input-box" value="0, 3, 2, 0, 1">
+        <br><br>
+        <label for="col-input">Column Sums:</label>
+        <input type="text" id="col-input" class="input-box" value="1, 1, 1, 2, 1">
+        <br><br>
+        <button id="generate_button" class="generate-btn">Generate Matrix</button>
+    </div>
+
+    <div id="error-output" class="error-text"></div>
+    
+    <div id="matrix-container"></div>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
