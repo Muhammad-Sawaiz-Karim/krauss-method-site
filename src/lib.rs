@@ -1,3 +1,4 @@
+use wasm_bindgen::prelude::*;
 use std::cmp;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
@@ -30,7 +31,7 @@ fn get_row_sums(matrix: &Vec<Vec<i32>>) -> Vec<i32> {
     row_sums
 }
 
-fn is_matrix_possible(row_sums: &Vec<i32>, column_sums: &Vec<i32>) -> bool {
+fn is_matrix_possible(row_sums: &[i32], column_sums: &[i32]) -> bool {
     let row_len: usize = row_sums.len();
     let col_len: usize = column_sums.len();
 
@@ -74,7 +75,7 @@ fn is_matrix_possible(row_sums: &Vec<i32>, column_sums: &Vec<i32>) -> bool {
     true
 }
 
-fn generate_matrix_for(row_sums: &Vec<i32>, column_sums: &Vec<i32>) -> Result<Vec<Vec<i32>>, String> {
+fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<i32>>, String> {
     let row_len = row_sums.len();
     let col_len = column_sums.len();
     let mut ferrers_matrix = vec![vec![0; col_len]; row_len];
@@ -157,36 +158,20 @@ fn generate_matrix_for(row_sums: &Vec<i32>, column_sums: &Vec<i32>) -> Result<Ve
     Ok(ferrers_matrix)
 }
 
-fn print_matrix(matrix: &Vec<Vec<i32>>)
+#[wasm_bindgen]
+pub fn generate_matrix_wasm(row_sums: &[i32], column_sums: &[i32]) -> Result<JsValue, JsValue>
 {
-    let row_len = matrix.len();
-    let col_len = matrix[0].len();
-
-    for row in 0..row_len
-    {
-        for column in 0..col_len
-        {
-            print!("{} ", matrix[row][column]);
-        }
-        println!("");
-    }
-}
-fn main() {
-    let row: Vec<i32> = vec![0, 3, 2, 0, 1];
-    let col: Vec<i32> = vec![1, 1, 1, 2, 1];
-
-    println!("Is a matrix possible? {}", is_matrix_possible(&row, &col));
-    let matrix = generate_matrix_for(&row, &col);
-
+    let matrix = generate_matrix_for(row_sums, column_sums);
     match matrix
     {
         Ok(matrix) =>
         {
-            print_matrix(&matrix);
+            return Ok(serde_wasm_bindgen::to_value(&matrix).unwrap());
         }
+
         Err(error_message) =>
         {
-            println!("Matrix was not generated.");
+            return Err(JsValue::from_str(&format!("Matrix was not generated: {}", &error_message)));
         }
     }
 }
