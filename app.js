@@ -109,11 +109,11 @@ function drawGraph(matrixArray) {
 
 async function run() { 
     try {
-        await init('pkg/rust_port_bg.wasm'); 
+        await init(); 
         console.log("WASM Loaded!");
     } catch (e) {
         console.error("Initialization failure:", e);
-        alert("MIME/Load Error: " + e.message);
+        alert("Load Error: " + e.message);
         return;
     }
     
@@ -126,7 +126,6 @@ async function run() {
     generateButton.addEventListener('click', () => {
         errorOutput.innerText = "";
         matrixContainer.innerHTML = "";
-        cy.innerHTML = "";
 
         const rowSums = parseInputString(rowInput.value);
         const colSums = parseInputString(colInput.value);
