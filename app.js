@@ -119,6 +119,7 @@ async function run() {
     generateButton.addEventListener('click', () => {
         errorOutput.innerText = "";
         matrixContainer.innerHTML = "";
+        cy.innerHTML = "";
 
         const rowSums = parseInputString(rowInput.value);
         const colSums = parseInputString(colInput.value);

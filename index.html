@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Rust WASM Matrix Generator</title>
+    <title>Krauss Method Matrix Generator</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <h1>Matrix Generator Test</h1>
+    <h1>Matrix Generator</h1>
 
     <div class="input-group">
         <label for="row-input">Row Sums:</label>
@@ -21,6 +21,9 @@
         <br><br>
         <label for="col-input">Column Sums:</label>
         <input type="text" id="col-input" class="input-box" value="1, 1, 1, 2, 1">
+        <br><br>
+        <input type="checkbox" id="fix-option">
+        <label for="fix-option"> Fix matrix if invalid?</label>
         <br><br>
         <button id="generate_button" class="generate-btn">Generate Matrix</button>
     </div>
