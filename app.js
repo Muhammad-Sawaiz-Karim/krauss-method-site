@@ -107,9 +107,16 @@ function drawGraph(matrixArray) {
     });
 }
 
-async function run() {
-    await init();
-    console.log("WASM Loaded Successfully!");
+async function run() { 
+    try {
+        await init('pkg/rust_port_bg.wasm'); 
+        console.log("WASM Loaded!");
+    } catch (e) {
+        console.error("Initialization failure:", e);
+        alert("MIME/Load Error: " + e.message);
+        return;
+    }
+    
     const generateButton = document.getElementById("generate_button");
     const rowInput = document.getElementById("row-input");
     const colInput = document.getElementById("col-input");
