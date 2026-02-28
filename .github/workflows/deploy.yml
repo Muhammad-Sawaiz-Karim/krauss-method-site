@@ -29,6 +29,7 @@ jobs:
       - name: Prepare for GitHub Pages (The Gotcha Fixes)
         run: |
           rm -f pkg/.gitignore
+          rm -f .gitignore
           touch .nojekyll
 
       - name: Deploy to gh-pages branch
