@@ -125,7 +125,7 @@ async function run() {
         const colSums = parseInputString(colInput.value);
 
         try {
-            const matrix = generate_matrix_wasm(rowSums, colSums);
+            const matrix = generate_matrix_wasm(rowSums, colSums, true);
 
             drawMatrix(matrix);
             drawGraph(matrix);
