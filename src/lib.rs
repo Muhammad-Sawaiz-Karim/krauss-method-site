@@ -113,6 +113,64 @@ pub fn total_fix(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>) 
     (rows, cols)
 }
 
+pub fn total_fix_preserved(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>) {
+    // 1. Tag inputs with their original indices
+    let mut row_tuples: Vec<(usize, i32)> = row_sums.iter().copied().enumerate().collect();
+    let mut col_tuples: Vec<(usize, i32)> = column_sums.iter().copied().enumerate().collect();
+
+    // 2. Sort descending by value
+    row_tuples.sort_by(|a, b| b.1.cmp(&a.1));
+    col_tuples.sort_by(|a, b| b.1.cmp(&a.1));
+
+    let sorted_rows: Vec<i32> = row_tuples.iter().map(|t| t.1).collect();
+    let sorted_cols: Vec<i32> = col_tuples.iter().map(|t| t.1).collect();
+
+    // 3. Run Step 1 & 2 of the math pipeline
+    let (f_rows, f_cols) = fix_dim(&sorted_rows, &sorted_cols);
+    let (f_rows, f_cols) = fix_balance(&f_rows, &f_cols);
+
+    // 4. fix_balance might have appended elements. We must assign them new indices 
+    // and re-sort before the Gale-Ryser majorization!
+    let mut current_row_tuples = Vec::new();
+    for i in 0..f_rows.len() {
+        let original_idx = if i < row_tuples.len() { row_tuples[i].0 } else { row_sums.len() + (i - row_tuples.len()) };
+        current_row_tuples.push((original_idx, f_rows[i]));
+    }
+    
+    let mut current_col_tuples = Vec::new();
+    for i in 0..f_cols.len() {
+        let original_idx = if i < col_tuples.len() { col_tuples[i].0 } else { column_sums.len() + (i - col_tuples.len()) };
+        current_col_tuples.push((original_idx, f_cols[i]));
+    }
+
+    // Re-sort descending before majorization
+    current_row_tuples.sort_by(|a, b| b.1.cmp(&a.1));
+    current_col_tuples.sort_by(|a, b| b.1.cmp(&a.1));
+    
+    let maj_input_rows: Vec<i32> = current_row_tuples.iter().map(|t| t.1).collect();
+    let maj_input_cols: Vec<i32> = current_col_tuples.iter().map(|t| t.1).collect();
+    
+    // 5. Run Step 3: Gale-Ryser Majorization
+    let (final_fixed_rows, final_fixed_cols) = fix_majorization(&maj_input_rows, &maj_input_cols);
+    
+    // 6. Map the mathematically fixed values back to their tracked indices
+    for i in 0..final_fixed_rows.len() {
+        current_row_tuples[i].1 = final_fixed_rows[i];
+    }
+    for i in 0..final_fixed_cols.len() {
+        current_col_tuples[i].1 = final_fixed_cols[i];
+    }
+    
+    // 7. Un-sort: Sort ascending by the ORIGINAL index to restore the visual order!
+    current_row_tuples.sort_by(|a, b| a.0.cmp(&b.0));
+    current_col_tuples.sort_by(|a, b| a.0.cmp(&b.0));
+    
+    let restored_rows: Vec<i32> = current_row_tuples.into_iter().map(|t| t.1).collect();
+    let restored_cols: Vec<i32> = current_col_tuples.into_iter().map(|t| t.1).collect();
+
+    (restored_rows, restored_cols)
+}
+
 fn get_column_sums(matrix: &Vec<Vec<i32>>) -> Vec<i32> {
     let row_len: usize = matrix.len();
     let col_len: usize = matrix[0].len();
@@ -241,9 +299,7 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             let mut possible_row_switch: Vec<usize> = vec![];
             let mut i = 0;
             let mut j = 0;
-
-            // --- THE FIX IS HERE ---
-            // Keep randomly picking i and j until we find a pair that allows a valid row swap
+            
             while possible_row_switch.is_empty() {
                 i = *excess_columns.choose(&mut rng).expect("No columns found.");
                 j = *deficient_columns.choose(&mut rng).expect("No columns found.");
@@ -255,8 +311,6 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
                 }
             }
 
-            // Because of the while loop above, we mathematically guarantee 
-            // this vector is no longer empty, so it will never panic!
             let row = *possible_row_switch.choose(&mut rng).unwrap();
 
             ferrers_matrix[row][i] = 0;
@@ -279,7 +333,7 @@ pub fn generate_matrix_wasm(
     let final_cols: Vec<i32>;
 
     if fix {
-        let (fixed_rows, fixed_cols) = total_fix(row_sums, column_sums);
+        let (fixed_rows, fixed_cols) = total_fix_preserved(row_sums, column_sums);
         final_rows = fixed_rows;
         final_cols = fixed_cols;
     }
