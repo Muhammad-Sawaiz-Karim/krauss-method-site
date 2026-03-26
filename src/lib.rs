@@ -76,15 +76,13 @@ pub fn fix_majorization(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec
     for i in 0..l {
         if i >= conjugate_sums.len() {
             prefix_conj_sums += 0;
-        }
-        else {
+        } else {
             prefix_conj_sums += conjugate_sums[i];
         }
 
         if i >= col_len {
             prefix_col_sums += 0;
-        }
-        else {
+        } else {
             prefix_col_sums += fix_col_sums[i];
         }
 
@@ -102,9 +100,8 @@ pub fn fix_majorization(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec
     (fix_row_sums, fix_col_sums)
 }
 
-
 pub fn total_fix(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>) {
-    let (rows, cols) =  fix_dim(row_sums, column_sums);
+    let (rows, cols) = fix_dim(row_sums, column_sums);
     let (mut rows, mut cols) = fix_balance(&rows, &cols);
     rows.sort_by(|a, b| b.cmp(a));
     cols.sort_by(|a, b| b.cmp(a));
@@ -129,30 +126,38 @@ pub fn total_fix_preserved(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, 
     let (f_rows, f_cols) = fix_dim(&sorted_rows, &sorted_cols);
     let (f_rows, f_cols) = fix_balance(&f_rows, &f_cols);
 
-    // 4. fix_balance might have appended elements. We must assign them new indices 
-    // and re-sort before the Gale-Ryser majorization!
+    // 4. fix_balance might have appended elements. We must assign them new indices
+    // and re-sort before the Gale-Ryser majorization
     let mut current_row_tuples = Vec::new();
     for i in 0..f_rows.len() {
-        let original_idx = if i < row_tuples.len() { row_tuples[i].0 } else { row_sums.len() + (i - row_tuples.len()) };
+        let original_idx = if i < row_tuples.len() {
+            row_tuples[i].0
+        } else {
+            row_sums.len() + (i - row_tuples.len())
+        };
         current_row_tuples.push((original_idx, f_rows[i]));
     }
-    
+
     let mut current_col_tuples = Vec::new();
     for i in 0..f_cols.len() {
-        let original_idx = if i < col_tuples.len() { col_tuples[i].0 } else { column_sums.len() + (i - col_tuples.len()) };
+        let original_idx = if i < col_tuples.len() {
+            col_tuples[i].0
+        } else {
+            column_sums.len() + (i - col_tuples.len())
+        };
         current_col_tuples.push((original_idx, f_cols[i]));
     }
 
     // Re-sort descending before majorization
     current_row_tuples.sort_by(|a, b| b.1.cmp(&a.1));
     current_col_tuples.sort_by(|a, b| b.1.cmp(&a.1));
-    
+
     let maj_input_rows: Vec<i32> = current_row_tuples.iter().map(|t| t.1).collect();
     let maj_input_cols: Vec<i32> = current_col_tuples.iter().map(|t| t.1).collect();
-    
+
     // 5. Run Step 3: Gale-Ryser Majorization
     let (final_fixed_rows, final_fixed_cols) = fix_majorization(&maj_input_rows, &maj_input_cols);
-    
+
     // 6. Map the mathematically fixed values back to their tracked indices
     for i in 0..final_fixed_rows.len() {
         current_row_tuples[i].1 = final_fixed_rows[i];
@@ -160,11 +165,11 @@ pub fn total_fix_preserved(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, 
     for i in 0..final_fixed_cols.len() {
         current_col_tuples[i].1 = final_fixed_cols[i];
     }
-    
-    // 7. Un-sort: Sort ascending by the ORIGINAL index to restore the visual order!
+
+    // 7. Un-sort: Sort ascending by the ORIGINAL index to restore the visual order
     current_row_tuples.sort_by(|a, b| a.0.cmp(&b.0));
     current_col_tuples.sort_by(|a, b| a.0.cmp(&b.0));
-    
+
     let restored_rows: Vec<i32> = current_row_tuples.into_iter().map(|t| t.1).collect();
     let restored_cols: Vec<i32> = current_col_tuples.into_iter().map(|t| t.1).collect();
 
@@ -280,7 +285,9 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             }
 
             if !flag {
-                return Err(String::from("Could not find any columns with excess sum.\n"));
+                return Err(String::from(
+                    "Could not find any columns with excess sum.\n",
+                ));
             }
 
             flag = false;
@@ -292,17 +299,21 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             }
 
             if !flag {
-                return Err(String::from("Could not find any columns with deficient sum.\n"));
+                return Err(String::from(
+                    "Could not find any columns with deficient sum.\n",
+                ));
             }
-            
+
             let mut rng = thread_rng();
             let mut possible_row_switch: Vec<usize> = vec![];
             let mut i = 0;
             let mut j = 0;
-            
+
             while possible_row_switch.is_empty() {
                 i = *excess_columns.choose(&mut rng).expect("No columns found.");
-                j = *deficient_columns.choose(&mut rng).expect("No columns found.");
+                j = *deficient_columns
+                    .choose(&mut rng)
+                    .expect("No columns found.");
 
                 for row in 0..row_len {
                     if ferrers_matrix[row][i] == 1 && ferrers_matrix[row][j] == 0 {
@@ -327,7 +338,7 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
 pub fn generate_matrix_wasm(
     row_sums: &[i32],
     column_sums: &[i32],
-    fix: bool
+    fix: bool,
 ) -> Result<JsValue, JsValue> {
     let final_rows: Vec<i32>;
     let final_cols: Vec<i32>;
@@ -336,8 +347,7 @@ pub fn generate_matrix_wasm(
         let (fixed_rows, fixed_cols) = total_fix_preserved(row_sums, column_sums);
         final_rows = fixed_rows;
         final_cols = fixed_cols;
-    }
-    else {
+    } else {
         final_rows = row_sums.to_vec();
         final_cols = column_sums.to_vec();
     }
@@ -363,7 +373,6 @@ mod tests {
 
     #[test]
     fn test_the_infinite_loop() {
-        // The exact inputs that froze your browser
         let rows = vec![0, 3, 2, 0, 1, 2, 2];
         let cols = vec![1, 1, 1];
 
@@ -374,8 +383,6 @@ mod tests {
         println!("Fixed Cols: {:?}", fixed_cols);
         println!("-------------------------------");
 
-        // If my theory is correct, this will hang your terminal forever.
-        // You will have to press Ctrl+C to kill it!
         let _ = generate_matrix_for(&fixed_rows, &fixed_cols);
     }
 }
