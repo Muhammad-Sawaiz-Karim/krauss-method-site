@@ -26,14 +26,24 @@ jobs:
       - name: Build WASM
         run: wasm-pack build --target web
 
-      - name: Prepare for GitHub Pages (The Gotcha Fixes)
+      - name: Prepare Deployment Folder
         run: |
-          rm -f pkg/.gitignore
-          touch .nojekyll
+          # 1. Create a clean folder for the live website
+          mkdir dist
+          
+          # 2. Copy your HTML, CSS, JS, and the compiled WASM folder into it
+          cp index.html style.css app.js dist/
+          cp -r pkg dist/
+          
+          # 3. Add the bypass file so GitHub Pages doesn't ignore the WASM
+          touch dist/.nojekyll
+          
+          # 4. Remove the internal gitignore from the pkg folder just to be safe
+          rm -f dist/pkg/.gitignore
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./ 
+          publish_dir: ./dist  # <-- Changed this to only deploy the clean folder
           publish_branch: gh-pages
