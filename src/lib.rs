@@ -46,8 +46,11 @@ pub fn fix_balance(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>
 }
 
 pub fn fix_majorization(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>) {
-    let fix_row_sums: Vec<i32> = row_sums.to_vec();
+    let mut fix_row_sums: Vec<i32> = row_sums.to_vec();
     let mut fix_col_sums: Vec<i32> = column_sums.to_vec();
+
+    fix_row_sums.sort_by(|a, b| b.cmp(a));
+    fix_col_sums.sort_by(|a, b| b.cmp(a));
 
     let row_len: usize = fix_row_sums.len();
     let col_len: usize = fix_col_sums.len();
@@ -102,7 +105,9 @@ pub fn fix_majorization(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec
 
 pub fn total_fix(row_sums: &[i32], column_sums: &[i32]) -> (Vec<i32>, Vec<i32>) {
     let (rows, cols) =  fix_dim(row_sums, column_sums);
-    let (rows, cols) = fix_balance(&rows, &cols);
+    let (mut rows, mut cols) = fix_balance(&rows, &cols);
+    rows.sort_by(|a, b| b.cmp(a));
+    cols.sort_by(|a, b| b.cmp(a));
     let (rows, cols) = fix_majorization(&rows, &cols);
 
     (rows, cols)
@@ -139,11 +144,16 @@ fn get_row_sums(matrix: &Vec<Vec<i32>>) -> Vec<i32> {
 fn is_matrix_possible(row_sums: &[i32], column_sums: &[i32]) -> bool {
     let row_len: usize = row_sums.len();
     let col_len: usize = column_sums.len();
+    let mut sorted_rows = row_sums.to_vec();
+    let mut sorted_cols = column_sums.to_vec();
+
+    sorted_rows.sort_by(|a, b| b.cmp(a));
+    sorted_cols.sort_by(|a, b| b.cmp(a));
 
     let mut ferrers_matrix = vec![vec![0; col_len]; row_len];
 
     for i in 0..row_len {
-        let mut num_ones = row_sums[i];
+        let mut num_ones = sorted_rows[i];
         for j in 0..col_len {
             if num_ones > 0 {
                 ferrers_matrix[i][j] = 1;
@@ -154,8 +164,8 @@ fn is_matrix_possible(row_sums: &[i32], column_sums: &[i32]) -> bool {
 
     let conjugate_sums: Vec<i32> = get_column_sums(&ferrers_matrix);
     let conj_len: usize = conjugate_sums.len();
-
     let l = cmp::max(col_len, conj_len);
+
     let mut prefix_conj_sums = 0;
     let mut prefix_col_sums = 0;
 
@@ -169,7 +179,7 @@ fn is_matrix_possible(row_sums: &[i32], column_sums: &[i32]) -> bool {
         if i >= col_len {
             prefix_col_sums += 0;
         } else {
-            prefix_col_sums += column_sums[i];
+            prefix_col_sums += sorted_cols[i];
         }
 
         if prefix_conj_sums < prefix_col_sums {
@@ -212,9 +222,7 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             }
 
             if !flag {
-                return Err(String::from(
-                    "Could not find any columns with excess sum.\n",
-                ));
+                return Err(String::from("Could not find any columns with excess sum.\n"));
             }
 
             flag = false;
@@ -226,27 +234,30 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             }
 
             if !flag {
-                return Err(String::from(
-                    "Could not find any columns with deficient sum.\n",
-                ));
+                return Err(String::from("Could not find any columns with deficient sum.\n"));
             }
+            
             let mut rng = thread_rng();
-            let i = *excess_columns.choose(&mut rng).expect("No columns found.");
-            let j = *deficient_columns
-                .choose(&mut rng)
-                .expect("No columns found.");
-
             let mut possible_row_switch: Vec<usize> = vec![];
+            let mut i = 0;
+            let mut j = 0;
 
-            for row in 0..row_len {
-                if ferrers_matrix[row][i] == 1 && ferrers_matrix[row][j] == 0 {
-                    possible_row_switch.push(row);
+            // --- THE FIX IS HERE ---
+            // Keep randomly picking i and j until we find a pair that allows a valid row swap
+            while possible_row_switch.is_empty() {
+                i = *excess_columns.choose(&mut rng).expect("No columns found.");
+                j = *deficient_columns.choose(&mut rng).expect("No columns found.");
+
+                for row in 0..row_len {
+                    if ferrers_matrix[row][i] == 1 && ferrers_matrix[row][j] == 0 {
+                        possible_row_switch.push(row);
+                    }
                 }
             }
 
-            let row = *possible_row_switch
-                .choose(&mut rng)
-                .expect("No possible row switchings");
+            // Because of the while loop above, we mathematically guarantee 
+            // this vector is no longer empty, so it will never panic!
+            let row = *possible_row_switch.choose(&mut rng).unwrap();
 
             ferrers_matrix[row][i] = 0;
             ferrers_matrix[row][j] = 1;
@@ -289,5 +300,28 @@ pub fn generate_matrix_wasm(
                 &error_message
             )));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_the_infinite_loop() {
+        // The exact inputs that froze your browser
+        let rows = vec![0, 3, 2, 0, 1, 2, 2];
+        let cols = vec![1, 1, 1];
+
+        let (fixed_rows, fixed_cols) = total_fix(&rows, &cols);
+
+        println!("--- State Before Generation ---");
+        println!("Fixed Rows: {:?}", fixed_rows);
+        println!("Fixed Cols: {:?}", fixed_cols);
+        println!("-------------------------------");
+
+        // If my theory is correct, this will hang your terminal forever.
+        // You will have to press Ctrl+C to kill it!
+        let _ = generate_matrix_for(&fixed_rows, &fixed_cols);
     }
 }
