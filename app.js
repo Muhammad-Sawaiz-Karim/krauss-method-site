@@ -92,7 +92,7 @@ function drawGraph(matrixArray) {
                     'text-valign': 'center',
                     'text-halign': 'center',
                     'color': '#fff',
-                    'font-size': '12px',
+                    'font-size': '15px',
                     'font-family': 'monospace',
                     'width': '40px',
                     'height': '40px',
@@ -103,14 +103,14 @@ function drawGraph(matrixArray) {
             {
                 selector: '.row-node',
                 style: { 
-                    'background-color': '#4f46e5',
+                    'background-color': '#342f97',
                     'shape': 'round-rectangle' 
                 }
             },
             {
                 selector: '.col-node',
                 style: { 
-                    'background-color': '#10b981',
+                    'background-color': '#0c8b61',
                     'shape': 'ellipse' 
                 }
             },
