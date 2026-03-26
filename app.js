@@ -32,48 +32,56 @@ function drawGraph(matrixArray) {
     const rowCount = matrixArray.length;
     const colCount = matrixArray[0].length;
 
-    // 1. Create Row Nodes (Top)
+    // Adjust these to change the "spread" of the graph
+    const horizontalSpacing = 100; 
+    const verticalGap = 250; 
+
+    // 1. Create Row Nodes (Top Line: y = 0)
     for (let i = 0; i < rowCount; i++) {
         elements.push({
             data: { id: `R${i}`, label: `R${i}` },
+            // We force all Row nodes to the same Y coordinate
+            position: { x: i * horizontalSpacing, y: 0 },
             classes: 'row-node'
         });
     }
 
-    // 2. Create Column Nodes (Bottom)
+    // 2. Create Column Nodes (Bottom Line: y = verticalGap)
+    // To center the columns relative to the rows, we can add an offset
+    const rowWidth = (rowCount - 1) * horizontalSpacing;
+    const colWidth = (colCount - 1) * horizontalSpacing;
+    const offset = (rowWidth - colWidth) / 2;
+
     for (let i = 0; i < colCount; i++) {
         elements.push({
             data: { id: `C${i}`, label: `C${i}` },
+            // We force all Col nodes to the same Y coordinate
+            position: { x: (i * horizontalSpacing) + offset, y: verticalGap },
             classes: 'col-node'
         });
     }
 
-    // 3. Create Edges
+    // 3. Create Edges (Same as before)
     for (let i = 0; i < rowCount; i++) {
         for (let j = 0; j < colCount; j++) {
             if (matrixArray[i][j] == 1) {
                 elements.push({
-                    data: {
-                        id: `E-R${i}-C${j}`,
-                        source: `R${i}`,
-                        target: `C${j}`
-                    }
+                    data: { id: `E-R${i}-C${j}`, source: `R${i}`, target: `C${j}` }
                 });
             }
         }
     }
 
-    // 4. Initialize Cytoscape with the Modern Style
+    // 4. Initialize Cytoscape
     cytoscape({
         container: document.getElementById('cy'),
         elements: elements,
         
-        // Using 'grid' with 2 rows puts R nodes on top and C nodes on bottom automatically
+        // We switch to 'preset' because we provided the x/y coordinates manually
         layout: {
-            name: 'grid',
-            rows: 2,
+            name: 'preset',
             padding: 50,
-            spacingFactor: 1.1
+            fit: true // This ensures the graph zooms to fit the container
         },
 
         style: [
@@ -95,14 +103,14 @@ function drawGraph(matrixArray) {
             {
                 selector: '.row-node',
                 style: { 
-                    'background-color': '#4f46e5', // Modern Indigo
+                    'background-color': '#4f46e5',
                     'shape': 'round-rectangle' 
                 }
             },
             {
                 selector: '.col-node',
                 style: { 
-                    'background-color': '#10b981', // Crisp Emerald
+                    'background-color': '#10b981',
                     'shape': 'ellipse' 
                 }
             },
@@ -110,11 +118,9 @@ function drawGraph(matrixArray) {
                 selector: 'edge',
                 style: {
                     'width': 2,
-                    'line-color': '#2f3236', // Light slate gray
+                    'line-color': '#2f3236',
                     'curve-style': 'bezier',
-                    'target-arrow-shape': 'triangle', // Optional: adds direction
-                    'target-arrow-color': '#2f3236',
-                    'opacity': 1.0
+                    'opacity': 0.8
                 }
             }
         ],
