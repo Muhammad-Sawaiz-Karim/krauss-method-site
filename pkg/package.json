@@ -1,0 +1,15 @@
+{
+  "name": "rust-port",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "rust_port_bg.wasm",
+    "rust_port.js",
+    "rust_port.d.ts"
+  ],
+  "main": "rust_port.js",
+  "types": "rust_port.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
