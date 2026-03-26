@@ -272,7 +272,19 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
         }
 
         let mut current_col_sums = get_column_sums(&ferrers_matrix);
+
+        // --- CIRCUIT BREAKER 1: Stop the Outer Loop ---
+        let mut max_iters = 10_000;
+
         while current_col_sums != *column_sums {
+            // Check outer circuit breaker
+            if max_iters == 0 {
+                return Err(String::from(
+                    "Generation timed out. The matrix might be mathematically impossible without sorting.",
+                ));
+            }
+            max_iters -= 1;
+
             let mut excess_columns: Vec<usize> = vec![];
             let mut deficient_columns: Vec<usize> = vec![];
             let mut flag: bool = false;
@@ -309,11 +321,21 @@ fn generate_matrix_for(row_sums: &[i32], column_sums: &[i32]) -> Result<Vec<Vec<
             let mut i = 0;
             let mut j = 0;
 
+            // --- CIRCUIT BREAKER 2: Stop the Inner Swap Search ---
+            let mut swap_iters = 1_000;
+
             while possible_row_switch.is_empty() {
-                i = *excess_columns.choose(&mut rng).expect("No columns found.");
-                j = *deficient_columns
-                    .choose(&mut rng)
-                    .expect("No columns found.");
+                // Check inner circuit breaker
+                if swap_iters == 0 {
+                    return Err(String::from(
+                        "Deadlock! The randomizer got trapped and could not find a valid row to swap. Try again.",
+                    ));
+                }
+                swap_iters -= 1;
+
+                // Safely unwrap here because the error returns above if it runs out of tries
+                i = *excess_columns.choose(&mut rng).unwrap();
+                j = *deficient_columns.choose(&mut rng).unwrap();
 
                 for row in 0..row_len {
                     if ferrers_matrix[row][i] == 1 && ferrers_matrix[row][j] == 0 {
