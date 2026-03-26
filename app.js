@@ -107,16 +107,9 @@ function drawGraph(matrixArray) {
     });
 }
 
-async function run() { 
-    try {
-        await init(); 
-        console.log("WASM Loaded!");
-    } catch (e) {
-        console.error("Initialization failure:", e);
-        alert("Load Error: " + e.message);
-        return;
-    }
-    
+async function run() {
+    await init();
+    console.log("WASM Loaded Successfully!");
     const generateButton = document.getElementById("generate_button");
     const rowInput = document.getElementById("row-input");
     const colInput = document.getElementById("col-input");
@@ -126,12 +119,13 @@ async function run() {
     generateButton.addEventListener('click', () => {
         errorOutput.innerText = "";
         matrixContainer.innerHTML = "";
+        cy.innerHTML = "";
 
         const rowSums = parseInputString(rowInput.value);
         const colSums = parseInputString(colInput.value);
 
         try {
-            const matrix = generate_matrix_wasm(rowSums, colSums);
+            const matrix = generate_matrix_wasm(rowSums, colSums, true);
 
             drawMatrix(matrix);
             drawGraph(matrix);
