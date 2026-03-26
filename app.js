@@ -115,18 +115,33 @@ async function run() {
     const colInput = document.getElementById("col-input");
     const errorOutput = document.getElementById("error-output");
     const matrixContainer = document.getElementById("matrix-container");
+    const fixCheckbox = document.getElementById("fix-option");
+    const report = document.getElementById("fix-report");
 
     generateButton.addEventListener('click', () => {
         errorOutput.innerText = "";
         matrixContainer.innerHTML = "";
         cy.innerHTML = "";
+        report.innerHTML = "";
 
         const rowSums = parseInputString(rowInput.value);
         const colSums = parseInputString(colInput.value);
 
         try {
-            const matrix = generate_matrix_wasm(rowSums, colSums, true);
+            const matrix = generate_matrix_wasm(rowSums, colSums, fixCheckbox.checked);
 
+            const newRowSums = matrix.map(row => row.reduce((a, b) => a + b, 0));
+            const newColSums = matrix[0].map((_, colIndex) => 
+                matrix.reduce((sum, row) => sum + row[colIndex], 0)
+            );
+
+            if (fixCheckbox.checked) {
+                if (rowSums.join(',') !== newRowSums.join(',') || colSums.join(',') !== newColSums.join(',')) {
+                    report.innerText = `Matrix Fixed. \nNew Row Sums: [${newRowSums.join(', ')}]\nNew Column Sums: [${newColSums.join(', ')}]`;
+                } else {
+                    report.innerText = "No fixes needed. Matrix was already valid";
+                }
+            }
             drawMatrix(matrix);
             drawGraph(matrix);
         }
