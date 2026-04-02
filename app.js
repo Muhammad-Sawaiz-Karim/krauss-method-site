@@ -32,45 +32,57 @@ function drawGraph(matrixArray) {
     const rowCount = matrixArray.length;
     const colCount = matrixArray[0].length;
 
+    // Adjust these to change the "spread" of the graph
+    const horizontalSpacing = 100; 
+    const verticalGap = 250; 
+
+    // 1. Create Row Nodes (Top Line: y = 0)
     for (let i = 0; i < rowCount; i++) {
         elements.push({
-            data: {id: `R${i}`, label: `R${i}`},
-            position: {x: 100, y: i * 80 + 50},
+            data: { id: `R${i}`, label: `R${i}` },
+            // We force all Row nodes to the same Y coordinate
+            position: { x: i * horizontalSpacing, y: 0 },
             classes: 'row-node'
         });
     }
 
+    // 2. Create Column Nodes (Bottom Line: y = verticalGap)
+    // To center the columns relative to the rows, we can add an offset
+    const rowWidth = (rowCount - 1) * horizontalSpacing;
+    const colWidth = (colCount - 1) * horizontalSpacing;
+    const offset = (rowWidth - colWidth) / 2;
+
     for (let i = 0; i < colCount; i++) {
         elements.push({
-            data: {id: `C${i}`, label: `C${i}`},
-            position: {x: 400, y: i * 80 + 50},
+            data: { id: `C${i}`, label: `C${i}` },
+            // We force all Col nodes to the same Y coordinate
+            position: { x: (i * horizontalSpacing) + offset, y: verticalGap },
             classes: 'col-node'
         });
     }
 
+    // 3. Create Edges (Same as before)
     for (let i = 0; i < rowCount; i++) {
         for (let j = 0; j < colCount; j++) {
             if (matrixArray[i][j] == 1) {
                 elements.push({
-                    data: {
-                        id: `E-R${i}-C${j}`,
-                        source: `R${i}`,
-                        target: `C${j}`
-                    }
+                    data: { id: `E-R${i}-C${j}`, source: `R${i}`, target: `C${j}` }
                 });
             }
         }
     }
 
+    // 4. Initialize Cytoscape
     cytoscape({
         container: document.getElementById('cy'),
         elements: elements,
-        layout: {name: 'preset',
-            fit: true,
-            padding: 50
+        
+        // We switch to 'preset' because we provided the x/y coordinates manually
+        layout: {
+            name: 'preset',
+            padding: 50,
+            fit: true // This ensures the graph zooms to fit the container
         },
-        userZoomingEnabled: true,
-        userPanningEnabled: true,
 
         style: [
             {
@@ -78,32 +90,42 @@ function drawGraph(matrixArray) {
                 style: {
                     'label': 'data(label)',
                     'text-valign': 'center',
+                    'text-halign': 'center',
                     'color': '#fff',
-                    'font-size': '12px',
-                    'text-outline-width': 1,
-                    'text-outline-color': '#333'
+                    'font-size': '15px',
+                    'font-family': 'monospace',
+                    'width': '40px',
+                    'height': '40px',
+                    'border-width': '2px',
+                    'border-color': '#fff'
                 }
             },
-
             {
                 selector: '.row-node',
-                style: { 'background-color': '#0074D9', 'shape': 'triangle', 'width': 60 }
+                style: { 
+                    'background-color': '#342f97',
+                    'shape': 'round-rectangle' 
+                }
             },
-
             {
                 selector: '.col-node',
-                style: { 'background-color': '#FF4136', 'shape': 'circle', 'width': 60 }
+                style: { 
+                    'background-color': '#0c8b61',
+                    'shape': 'ellipse' 
+                }
             },
-
             {
                 selector: 'edge',
                 style: {
                     'width': 2,
-                    'line-color': '#aaa',
-                    'curve-style': 'bezier'
+                    'line-color': '#2f3236',
+                    'curve-style': 'bezier',
+                    'opacity': 0.8
                 }
             }
-        ]
+        ],
+        userZoomingEnabled: true,
+        userPanningEnabled: true
     });
 }
 
