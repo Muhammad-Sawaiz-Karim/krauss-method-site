@@ -191,20 +191,6 @@ fn get_column_sums(matrix: &Vec<Vec<i32>>) -> Vec<i32> {
     column_sums
 }
 
-fn get_row_sums(matrix: &Vec<Vec<i32>>) -> Vec<i32> {
-    let row_len: usize = matrix.len();
-    let col_len: usize = matrix[0].len();
-    let mut row_sums: Vec<i32> = vec![];
-    for i in 0..row_len {
-        let mut sum = 0;
-        for j in 0..col_len {
-            sum += matrix[i][j]
-        }
-        row_sums.push(sum);
-    }
-    row_sums
-}
-
 fn is_matrix_possible(row_sums: &[i32], column_sums: &[i32]) -> bool {
     let row_len: usize = row_sums.len();
     let col_len: usize = column_sums.len();
