@@ -1,176 +1,139 @@
-import init, { generate_matrix_wasm } from './pkg/rust_port.js';
+import init, { generate_matrix_wasm, generate_fulkerson_wasm } from './pkg/rust_port.js';
 
 function parseInputString(inputString) {
     const stringArray = inputString.split(',');
     const numberArray = stringArray.map(str => parseInt(str.trim(), 10));
-    const cleanNumbers = numberArray.filter(num => !isNaN(num));
-
-    return new Int32Array(cleanNumbers);
+    return new Int32Array(numberArray.filter(num => !isNaN(num)));
 }
 
 function drawMatrix(matrixArray) {
     let latexString = "\\begin{bmatrix}\n";
-
     for (let i = 0; i < matrixArray.length; i++) {
-        let row = matrixArray[i];
-        let rowString = row.join(" & ");
-        latexString += rowString + " \\\\\n";
+        latexString += matrixArray[i].join(" & ") + " \\\\\n";
     }
-
     latexString += "\\end{bmatrix}";
-
-    const container = document.getElementById("matrix-container");
-
-    katex.render(latexString, container, {
-        displayMode: true,
-        throwOnError: false
+    katex.render(latexString, document.getElementById("matrix-container"), {
+        displayMode: true, throwOnError: false
     });
 }
 
-function drawGraph(matrixArray) {
+// GRAPH 1: The Bipartite Graph (Krauss)
+function drawKraussGraph(matrixArray) {
     const elements = [];
     const rowCount = matrixArray.length;
     const colCount = matrixArray[0].length;
+    const horizontalSpacing = 100, verticalGap = 250; 
 
-    // Adjust these to change the "spread" of the graph
-    const horizontalSpacing = 100; 
-    const verticalGap = 250; 
-
-    // 1. Create Row Nodes (Top Line: y = 0)
     for (let i = 0; i < rowCount; i++) {
-        elements.push({
-            data: { id: `R${i}`, label: `R${i}` },
-            // We force all Row nodes to the same Y coordinate
-            position: { x: i * horizontalSpacing, y: 0 },
-            classes: 'row-node'
-        });
+        elements.push({ data: { id: `R${i}`, label: `R${i}` }, position: { x: i * horizontalSpacing, y: 0 }, classes: 'row-node' });
     }
-
-    // 2. Create Column Nodes (Bottom Line: y = verticalGap)
-    // To center the columns relative to the rows, we can add an offset
-    const rowWidth = (rowCount - 1) * horizontalSpacing;
-    const colWidth = (colCount - 1) * horizontalSpacing;
-    const offset = (rowWidth - colWidth) / 2;
-
+    
+    const offset = ((rowCount - 1) * horizontalSpacing - (colCount - 1) * horizontalSpacing) / 2;
     for (let i = 0; i < colCount; i++) {
-        elements.push({
-            data: { id: `C${i}`, label: `C${i}` },
-            // We force all Col nodes to the same Y coordinate
-            position: { x: (i * horizontalSpacing) + offset, y: verticalGap },
-            classes: 'col-node'
-        });
+        elements.push({ data: { id: `C${i}`, label: `C${i}` }, position: { x: (i * horizontalSpacing) + offset, y: verticalGap }, classes: 'col-node' });
     }
 
-    // 3. Create Edges (Same as before)
     for (let i = 0; i < rowCount; i++) {
         for (let j = 0; j < colCount; j++) {
-            if (matrixArray[i][j] == 1) {
-                elements.push({
-                    data: { id: `E-R${i}-C${j}`, source: `R${i}`, target: `C${j}` }
-                });
-            }
+            if (matrixArray[i][j] == 1) elements.push({ data: { id: `E-R${i}-C${j}`, source: `R${i}`, target: `C${j}` } });
         }
     }
 
-    // 4. Initialize Cytoscape
     cytoscape({
         container: document.getElementById('cy'),
         elements: elements,
-        
-        // We switch to 'preset' because we provided the x/y coordinates manually
-        layout: {
-            name: 'preset',
-            padding: 50,
-            fit: true // This ensures the graph zooms to fit the container
-        },
-
+        layout: { name: 'preset', padding: 50, fit: true },
         style: [
-            {
-                selector: 'node',
-                style: {
-                    'label': 'data(label)',
-                    'text-valign': 'center',
-                    'text-halign': 'center',
-                    'color': '#fff',
-                    'font-size': '15px',
-                    'font-family': 'monospace',
-                    'width': '40px',
-                    'height': '40px',
-                    'border-width': '2px',
-                    'border-color': '#fff'
-                }
-            },
-            {
-                selector: '.row-node',
-                style: { 
-                    'background-color': '#342f97',
-                    'shape': 'round-rectangle' 
-                }
-            },
-            {
-                selector: '.col-node',
-                style: { 
-                    'background-color': '#0c8b61',
-                    'shape': 'ellipse' 
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'width': 2,
-                    'line-color': '#2f3236',
-                    'curve-style': 'bezier',
-                    'opacity': 0.8
-                }
-            }
-        ],
-        userZoomingEnabled: true,
-        userPanningEnabled: true
+            { selector: 'node', style: { 'label': 'data(label)', 'color': '#fff', 'text-valign': 'center', 'text-halign': 'center', 'font-family': 'monospace', 'width': '40px', 'height': '40px' } },
+            { selector: '.row-node', style: { 'background-color': '#342f97', 'shape': 'round-rectangle' } },
+            { selector: '.col-node', style: { 'background-color': '#0c8b61', 'shape': 'ellipse' } },
+            { selector: 'edge', style: { 'width': 2, 'line-color': '#2f3236', 'curve-style': 'bezier', 'opacity': 0.8 } }
+        ]
+    });
+}
+
+// GRAPH 2: The Directed Graph (Fulkerson)
+function drawFulkersonGraph(matrixArray) {
+    const elements = [];
+    const nodeCount = matrixArray.length; 
+
+    for (let i = 0; i < nodeCount; i++) {
+        elements.push({ data: { id: `N${i}`, label: `N${i}` } });
+    }
+
+    for (let i = 0; i < nodeCount; i++) {
+        for (let j = 0; j < nodeCount; j++) {
+            if (matrixArray[i][j] == 1) elements.push({ data: { id: `E-${i}-${j}`, source: `N${i}`, target: `N${j}` } });
+        }
+    }
+
+    cytoscape({
+        container: document.getElementById('cy'),
+        elements: elements,
+        layout: { name: 'circle', padding: 50, fit: true },
+        style: [
+            { selector: 'node', style: { 'label': 'data(label)', 'color': '#fff', 'text-valign': 'center', 'text-halign': 'center', 'font-family': 'monospace', 'width': '40px', 'height': '40px', 'background-color': '#342f97' } },
+            { selector: 'edge', style: { 'width': 2, 'line-color': '#2f3236', 'curve-style': 'bezier', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#2f3236', 'arrow-scale': 1.5, 'opacity': 0.8 } }
+        ]
     });
 }
 
 async function run() {
     await init();
     console.log("WASM Loaded Successfully!");
+    
     const generateButton = document.getElementById("generate_button");
-    const rowInput = document.getElementById("row-input");
-    const colInput = document.getElementById("col-input");
-    const errorOutput = document.getElementById("error-output");
-    const matrixContainer = document.getElementById("matrix-container");
+    const methodSelect = document.getElementById("method-select");
+    const fixWrapper = document.getElementById("fix-wrapper");
     const fixCheckbox = document.getElementById("fix-option");
-    const report = document.getElementById("fix-report");
+    
+    // UI Logic: Hide the "Fix" checkbox if Fulkerson is selected
+    methodSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'fulkerson') {
+            fixWrapper.style.display = 'none';
+        } else {
+            fixWrapper.style.display = 'flex';
+        }
+    });
 
     generateButton.addEventListener('click', () => {
-        errorOutput.innerText = "";
-        matrixContainer.innerHTML = "";
-        cy.innerHTML = "";
-        report.innerHTML = "";
+        document.getElementById("error-output").innerText = "";
+        document.getElementById("fix-report").innerText = "";
+        document.getElementById("matrix-container").innerHTML = "";
+        document.getElementById("cy").innerHTML = ""; 
 
-        const rowSums = parseInputString(rowInput.value);
-        const colSums = parseInputString(colInput.value);
+        const rowSums = parseInputString(document.getElementById("row-input").value);
+        const colSums = parseInputString(document.getElementById("col-input").value);
+        const method = methodSelect.value;
 
         try {
-            const matrix = generate_matrix_wasm(rowSums, colSums, fixCheckbox.checked);
-
-            const newRowSums = matrix.map(row => row.reduce((a, b) => a + b, 0));
-            const newColSums = matrix[0].map((_, colIndex) => 
-                matrix.reduce((sum, row) => sum + row[colIndex], 0)
-            );
-
-            if (fixCheckbox.checked) {
-                if (rowSums.join(',') !== newRowSums.join(',') || colSums.join(',') !== newColSums.join(',')) {
-                    report.innerText = `Matrix Fixed. \nNew Row Sums: [${newRowSums.join(', ')}]\nNew Column Sums: [${newColSums.join(', ')}]`;
-                } else {
-                    report.innerText = "No fixes needed. Matrix was already valid";
+            if (method === 'krauss') {
+                const matrix = generate_matrix_wasm(rowSums, colSums, fixCheckbox.checked);
+                
+                // Reporting Logic (Krauss only)
+                if (fixCheckbox.checked) {
+                    const newRowSums = matrix.map(row => row.reduce((a, b) => a + b, 0));
+                    const newColSums = matrix[0].map((_, colIndex) => matrix.reduce((sum, row) => sum + row[colIndex], 0));
+                    if (rowSums.join(',') !== newRowSums.join(',') || colSums.join(',') !== newColSums.join(',')) {
+                        document.getElementById("fix-report").innerText = `Matrix Fixed. \nNew Row Sums: [${newRowSums.join(', ')}]\nNew Column Sums: [${newColSums.join(', ')}]`;
+                    } else {
+                        document.getElementById("fix-report").innerText = "No fixes needed. Matrix was already valid";
+                    }
                 }
+                
+                drawMatrix(matrix);
+                drawKraussGraph(matrix);
+                
+            } else if (method === 'fulkerson') {
+                const matrix = generate_fulkerson_wasm(rowSums, colSums);
+                drawMatrix(matrix);
+                drawFulkersonGraph(matrix);
             }
-            drawMatrix(matrix);
-            drawGraph(matrix);
         }
         catch (error) {
             console.error("Error: ", error);
-            errorOutput.innerText = error;
+            document.getElementById("error-output").innerText = error;
         }
-    })
+    });
 }
 run();
