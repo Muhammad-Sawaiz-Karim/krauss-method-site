@@ -1,3 +1,4 @@
+pub mod fulkerson;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::cmp;
