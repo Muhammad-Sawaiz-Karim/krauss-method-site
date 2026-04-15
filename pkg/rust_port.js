@@ -3,6 +3,23 @@
 /**
  * @param {Int32Array} row_sums
  * @param {Int32Array} column_sums
+ * @returns {any}
+ */
+export function generate_fulkerson_wasm(row_sums, column_sums) {
+    const ptr0 = passArray32ToWasm0(row_sums, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(column_sums, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.generate_fulkerson_wasm(ptr0, len0, ptr1, len1);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {Int32Array} row_sums
+ * @param {Int32Array} column_sums
  * @param {boolean} fix
  * @returns {any}
  */

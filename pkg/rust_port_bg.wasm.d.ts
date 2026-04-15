@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const generate_matrix_wasm: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+export const generate_fulkerson_wasm: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
 export const __wbindgen_exn_store: (a: number) => void;

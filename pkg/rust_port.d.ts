@@ -1,6 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export function generate_fulkerson_wasm(row_sums: Int32Array, column_sums: Int32Array): any;
+
 export function generate_matrix_wasm(row_sums: Int32Array, column_sums: Int32Array, fix: boolean): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -8,6 +10,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly generate_matrix_wasm: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+    readonly generate_fulkerson_wasm: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
