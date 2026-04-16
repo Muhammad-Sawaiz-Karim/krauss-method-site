@@ -1,6 +1,8 @@
 # Krause Method Matrix Generator (WASM Port)
 
-This repository contains the Rust implementation of the Krause and Fulkerson matrix generation algorithms, compiled to WebAssembly (WASM) for rapid, client-side execution in the browser.
+This repository contains the Rust implementation of the Krause and Fulkerson matrix generation algorithms, compiled to WebAssembly (WASM) for rapid, client-side execution in the browser.  
+
+The code for the Krause method is under `src/lib.rs` and the code for Fulkerson's method is under `src/fulkerson.rs`.
 
 ## Prerequisites
 
